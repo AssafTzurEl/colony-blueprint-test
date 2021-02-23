@@ -1,0 +1,34 @@
+spec_version: 1 
+kind: blueprint
+environmentType: sandbox 
+ 
+metadata:
+  description: > 
+    Community Development (CST Internal Sandbox)4
+
+clouds:
+  - AWS: us-east-1
+ 
+artifacts:
+
+applications:
+ - CommDev:
+    instances: 1
+
+ingress:
+  listeners:
+    - http: 80
+      rules:
+      - path: /index
+        port: 80
+        application: CommDev
+        shortcut: "${colony.environment.public_address}/index"
+      - default: true
+        port: 80
+        application: CommDev
+        shortcut: $colony.environment.public_address
+
+services:
+
+debugging:
+  availability: on
