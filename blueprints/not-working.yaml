@@ -26,7 +26,7 @@ ingress:
       - default: true
         port: 80
         application: CommDev
-        shortcut: $colony.environment.public_address
+        shortcut: "${colony.environment.public_address}-$SandboxID"
 
 services:
 
