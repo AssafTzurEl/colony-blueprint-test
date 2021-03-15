@@ -1,0 +1,103 @@
+kind: blueprint
+clouds:
+- aws: eu-west-1
+applications:
+- chronos-client:
+    instances: 2
+    input_values:
+    - INSTANCETYPE: $INSTANCETYPE
+    - CHRONOS_SERVER_DNS: $colony.applications.chronos-server.dns
+    depends_on: 
+    - chronos-server
+- chronos-server:
+    target: chronos
+    input_values:
+    - INSTANCETYPE: $INSTANCETYPE
+    - SERVER_NAME: $SERVER_NAME
+    - SERVER_VERSION: 1.0
+- alpine:
+    input_values:
+    - READER_HEALTH_CHECK_PATHS: $outputs.chronos-server.reader_healthcheck_paths
+    depends_on:
+    - chronos-server
+- reader:
+    target: chronos
+    input_values:
+    - INSTANCETYPE: $INSTANCETYPE
+    - ENV_USER_CONTENT: $USER_CONTENT
+    - ENV_FILE_TO_READ_URL: $outputs.s3-writer.s3_file_url
+    - ENV_STR: $outputs.outputs-publisher.str
+    - ENV_OBJ: $outputs.outputs-publisher.obj
+    - ENV_MAP: $outputs.outputs-publisher.map
+    - ENV_LIST: $outputs.outputs-publisher.list
+      #colony automatic variables
+    - ENV_VIRTUAL_NETWORK_ID: $colony.VirtualNetworkId
+    - ENV_PUBLIC_ADDRESS: $colony.PublicAddress
+    - ENV_PUBLIC_ADDRESS_OLD: $PublicAddress
+    - ENV_SANDBOX_ID_NEW: $colony.environment.id
+    - ENV_SANDBOX_ID: $COLONY.SandboxID
+    - ENV_SANDBOX_ID_OLD: $SandboxID
+      #end of colony automatic variables
+    - ENV_OUTPUTS: "sandbox_id:${outputs.s3-writer.sandbox},bucket_name:${outputs.s3-writer.bucket},server_name:${outputs.chronos-server.name},ENV_OUTPUTS_PUBLISHER_STR:${colony.applications.outputs-publisher.outputs.str}"
+    - ENV_ALL_IN_ONE: "sandbox_id:${colony.sandboxId},public_address:${colony.PublicAddress},vpc:${colony.VirtualNetworkId},input1:${Input1},input2:${Input2},ENV_CHRONOS_SERVER_DNS:${colony.applications.chronos-server.dns},ENV_OUTPUTS_PUBLISHER_STR:${colony.applications.outputs-publisher.outputs.str}"
+    - HEALTH_CHECK_PATHS: $outputs.alpine.reader_healthcheck_paths
+    - ENV_CHRONOS_SERVER_DNS: $colony.applications.chronos-server.dns
+    - ENV_OUTPUTS_PUBLISHER_STR: $colony.applications.outputs-publisher.outputs.str
+    depends_on:
+    - s3-writer
+    - alpine
+    - chronos-server
+    - outputs-publisher
+services:
+- s3-writer:
+    input_values:
+      - BUCKET_NAME: $S3_WRITER_BUCKET_NAME
+      - USER_CONTENT: $USER_CONTENT
+      - SERVER_NAME: $outputs.chronos-server.name
+      - SERVER_VERSION: $outputs.chronos-server.version
+      - OUTPUT_PUBLISHER_STR: $outputs.outputs-publisher.str
+      - ROLE_ARN: $S3_WRITER_ROLE_ARN
+        #colony automatic variables
+      - VIRTUAL_NETWORK_ID: $colony.VirtualNetworkId
+      - PUBLIC_ADDRESS: $colony.PublicAddress
+      - PUBLIC_ADDRESS_OLD: $PublicAddress
+      - SANDBOX_ID: $COLONY.SandboxID
+      - SANDBOX_ID_OLD: $SandboxID
+        #end of colony automatic variables
+      - OUTPUTS: "server_name:${outputs.chronos-server.name},server_version:${outputs.chronos-server.version}"
+      - ALL_IN_ONE: "sandbox_id:${sandboxId},${colony.sandboxId},public_address:${PublicAddress},${colony.PublicAddress},${colony.environment.public_address},vpc:${colony.VirtualNetworkId},input1:${Input1},input2:${Input2},ENV_OUTPUTS_PUBLISHER_STR:${colony.applications.outputs-publisher.outputs.str}"
+    depends_on:
+      - chronos-server
+      - outputs-publisher
+- outputs-publisher
+spec_version: 1
+environmentType: sandbox
+artifacts:
+- chronos-server: 'chronos/server.py'
+- chronos-client: 'chronos/client.py'
+- reader: 'reader/reader.py'
+- alpine: 'python-http-server/server.py'
+inputs:
+- INSTANCETYPE:
+    default_value: t3.small,t3.medium,c5.large,m5.large,m4.large
+    optional: true
+- SERVER_NAME:
+    default_value: chronos
+    optional: true
+- USER_CONTENT:
+    default_value: 'default content'
+    optional: true
+- S3_WRITER_BUCKET_NAME: 
+    default_value: 'quali-s3store'
+    optional: true
+- S3_WRITER_ROLE_ARN:
+    default_value: 'PowerUserAccess'
+    optional: true
+- Input1:
+    default_value: value1
+    optional: true
+- Input2:
+    default_value: value2
+    optional: true
+debugging:
+  bastion_availability: enabled-on
