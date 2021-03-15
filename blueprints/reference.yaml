@@ -14,22 +14,22 @@ artifacts:
 
 
 applications:
- - CommDev:
+- CommDev:
     instances: 1
 
 #working
- ingress:
-   listeners:
-     - http: 80
-       rules:
-       - path: /index
-         port: 80
-         application: CommDev
-         shortcut: ${PublicAddress}/index
-       - default: true
-         port: 80
-         application: CommDev
-         shortcut: $PublicAddress
+  # ingress:
+    # listeners:
+      # - http: 80
+        # rules:
+        # - path: /index
+          # port: 80
+          # application: CommDev
+          # shortcut: ${PublicAddress}/index
+        # - default: true
+          # port: 80
+          # application: CommDev
+          # shortcut: $PublicAddress
 
 # errors
 ingress:
