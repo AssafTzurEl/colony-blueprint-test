@@ -45,9 +45,5 @@ ingress:
         application: CommDev
         shortcut: $colony.environment.public_address
 
-
-
-services:
-
 debugging:
   availability: on
